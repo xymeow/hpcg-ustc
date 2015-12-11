@@ -18,8 +18,11 @@
  HPCG routine
  */
 
+#ifndef HPCG_NO_MPI
+#include "ExchangeHalo.hpp"
+#endif
 #include "ComputeSYMGS.hpp"
-#include "ComputeSYMGS_ref.hpp"
+#include <cassert>
 
 /*!
   Routine to one step of symmetrix Gauss-Seidel:
@@ -49,7 +52,57 @@
 */
 int ComputeSYMGS( const SparseMatrix & A, const Vector & r, Vector & x) {
 
-  // This line and the next two lines should be removed and your version of ComputeSYMGS should be used.
-  return ComputeSYMGS_ref(A, r, x);
+  assert(x.localLength==A.localNumberOfColumns); // Make sure x contain space for halo values
 
+#ifndef HPCG_NO_MPI
+  ExchangeHalo(A,x);
+#endif
+
+  const local_int_t nrow = A.localNumberOfRows;
+  double ** matrixDiagonal = A.matrixDiagonal;  // An array of pointers to the diagonal entries A.matrixValues
+  const double * const rv = r.values;
+  double * const xv = x.values;
+  local_int_t i;
+  int j;
+  double * currentValues;
+  local_int_t * currentColIndices;
+  int currentNumberOfNonzeros;
+  double  currentDiagonal;
+  double sum;
+  for (i=0; i< nrow; i++) {
+    currentValues = A.matrixValues[i];
+    currentColIndices = A.mtxIndL[i];
+    currentNumberOfNonzeros = A.nonzerosInRow[i];
+    currentDiagonal = matrixDiagonal[i][0]; // Current diagonal value
+    sum = rv[i]; // RHS value
+
+    for (j=0; j< currentNumberOfNonzeros; j++) {
+      local_int_t curCol = currentColIndices[j];
+      sum -= currentValues[j] * xv[curCol];
+    }
+    sum += xv[i]*currentDiagonal; // Remove diagonal contribution from previous loop
+
+    xv[i] = sum/currentDiagonal;
+
+  }
+
+  // Now the back sweep.
+
+  for (i=nrow-1; i>=0; i--) {
+    currentValues = A.matrixValues[i];
+    currentColIndices = A.mtxIndL[i];
+    currentNumberOfNonzeros = A.nonzerosInRow[i];
+    currentDiagonal = matrixDiagonal[i][0]; // Current diagonal value
+    sum = rv[i]; // RHS value
+
+    for (j = 0; j< currentNumberOfNonzeros; j++) {
+      local_int_t curCol = currentColIndices[j];
+      sum -= currentValues[j]*xv[curCol];
+    }
+    sum += xv[i]*currentDiagonal; // Remove diagonal contribution from previous loop
+
+    xv[i] = sum/currentDiagonal;
+  }
+
+  return 0;
 }
