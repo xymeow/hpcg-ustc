@@ -60,9 +60,9 @@ int ComputeSPMV( const SparseMatrix & A, Vector & x, Vector & y) {
   double *cur_vals;
   local_int_t * cur_inds;
   int cur_nnz;
-#ifndef HPCG_NO_OPENMP
-  #pragma omp parallel for
-#endif
+// #ifndef HPCG_NO_OPENMP
+//   #pragma omp parallel for
+// #endif
   for (local_int_t i=0; i< nrow; i++)  {
     sum = 0.0;
     cur_vals = A.matrixValues[i];
