@@ -45,7 +45,7 @@ int ComputeMG(const SparseMatrix  & A, const Vector & r, Vector & x) {
 	int i;
     int numberOfPresmootherSteps = A.mgData->numberOfPresmootherSteps;
     #ifndef HPCG_NO_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for reduction(+: ierr)
     #endif
     for (i=0; i< numberOfPresmootherSteps; ++i) ierr += ComputeSYMGS(A, r, x);
     if (ierr!=0) return ierr;
@@ -56,7 +56,7 @@ int ComputeMG(const SparseMatrix  & A, const Vector & r, Vector & x) {
     ierr = ComputeProlongation_ref(A, x);  if (ierr!=0) return ierr;
     int numberOfPostsmootherSteps = A.mgData->numberOfPostsmootherSteps;
     #ifndef HPCG_NO_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for reduction(+: ierr)
     #endif
     for (i=0; i< numberOfPostsmootherSteps; ++i) ierr += ComputeSYMGS(A, r, x);
     if (ierr!=0) return ierr;
