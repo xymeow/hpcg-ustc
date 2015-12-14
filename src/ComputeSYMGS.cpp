@@ -69,6 +69,7 @@ int ComputeSYMGS( const SparseMatrix & A, const Vector & r, Vector & x) {
   int currentNumberOfNonzeros;
   double  currentDiagonal;
   double sum;
+  
   for (i=0; i< nrow; i++) {
     currentValues = A.matrixValues[i];
     currentColIndices = A.mtxIndL[i];
