@@ -66,7 +66,6 @@ int ComputeSPMV( const SparseMatrix & A, Vector & x, Vector & y) {
     #pragma omp single
     {
       #pragma omp parallel for
-      {
 #endif
   for (local_int_t i=0; i< nrow; i++)  {
     sum = 0.0;
@@ -86,7 +85,7 @@ int ComputeSPMV( const SparseMatrix & A, Vector & x, Vector & y) {
     yv[i] = sum;
   }
   #ifndef HPCG_NO_OPENMP
-  }
+  
 }
 }
 #endif
